@@ -1,34 +1,30 @@
-# Initiate scheduled backups for your files and directories
+# Save backups of your files and folders on a scheduled basis to your local environment. Specify the maximum number of backups to retain, and automatically dump the oldest backups.
 
 ## Instructions
 
-### 1. Identify the file or directory you wish to back-up
+### 1. Edit entries under the my_schedule function to include the file or directory you wish to back-up, the directory to which you will save backups, and the maximum number of the most recent backups you wish to retain.
 
-### 2. Identify a backup directory, where you wish to save your backups. Note that if you are backing up a file, the backup directory must already exist. If you are backing up a directory, the backup directory will be created automatically.
+### 2. Run this script in a background process:
 
-### 3. Add an entry under my_schedule using your desired parameters and backup schedule.
+###    nohup python -u backup.py > .backups_stdouterr.log 2>&1 &
 
-### 4. Run this script in a background process:
+### 3. Capture the process ID that the process is using:
 
-###    nohup python -u .backup.py > .backups_stdouterr.log 2>&1 &
+###    export backups_pid=YOUR_PROCESS_ID
 
-### 5. Make note of the process id that the process is using:
-
-###    export backups_pid=<YOUR_PROCESS_ID>
-
-### 6. Check your process:
+### 4. Monitor the status of your process:
 
 ###    ps aux | grep $backups_pid
 
-### 7. Check your backup location:
+### 5. Monitor your backup directory for backups:
 
-###    ls -a1 <YOUR_BACKUP_LOCATION>
+###    ls -a1 /path/to/your/backup/directory
 
-### 8. To stop creating and deleting backups, kill the process:
+### 6. To stop creating and deleting backups, terminate the process:
 
 ###    kill -9 $backups_pid
 
-### 9. To resume creating and deleting backups, repeat step 4.
+### 7. To resume creating and deleting backups, repeat step 2.
 
 import os
 import sys
