@@ -8,14 +8,14 @@ Save backups of your files and folders on a scheduled basis to your local enviro
 	```
 2. Edit `backup.py`, adding an entry under the `my_schedule` function using your desired parameters and backup schedule. Consider this example:
 	```
-		# Back-up a file or directory to directory_A at the first minute of every hour, and retain backups up to one week old.
-		schedule.every().hour.at(":00").do(create_backup,"/path/to/file_or_directory/to/backup", "/path/to/backup/directory_A", 168)
+	# Back-up a file or directory to directory_A at the first minute of every hour, and retain backups up to one week old.
+	schedule.every().hour.at(":00").do(create_backup,"/path/to/file_or_directory/to/backup", "/path/to/backup/directory_A", 168)
 	```
 	a. Identify the file or directory you wish to back-up, and replace `/path/to/file_or_directory/to/backup` with the path to this file or directory.
 	
 	b. Identify a directory to which you wish to save your backups, and replace `/path/to/backup/directory_A` with the path to this directory. Be sure to use a different backup directory than any others specified for other files or folders you are backing up in this script.
 
-	Note: If you are backing up a file, the backup directory must already exist. If you are backing up a directory, the backup directory will be created automatically by this script.
+	*Note*: If you are backing up a file, the backup directory must already exist. If you are backing up a directory, the backup directory will be created automatically by this script.
 	
 	c. Adjust the schedule to your requirements. Refer to the documentation for the [scheduler](https://pypi.org/project/schedule/) library, which this script leverages.
 	
