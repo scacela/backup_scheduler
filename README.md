@@ -11,43 +11,60 @@ Save timestamped backups of your files and folders on a scheduled basis to your 
 
 2. For use with Oracle Object Storage, ensure that your environment is authenticated for the Object Storage connection. This script leverages resource principal authentication by default.
 
+3. For use with Oracle Object Storage, ensure that your environment is able to access Oracle Object Storage via either the public internet, or if you will be taking backups from within your Oracle Cloud environment, you may use a Service Gateway to access Oracle Object Storage over the Oracle Services Network (OSN).
+
+4. Install `scheduler` to the environment from which you will be taking backups.
+
+	```
+	pip install scheduler
+ 	```
+
 ## Usage Instructions
 
-1. Edit the entries under the `my_schedule` function to include the file or directory for which you wish to save timestamped back-ups on a scheduled basis to your local environment or remotely to Oracle Object Storage.
+1. In `backup.py`, edit the entries under the `my_schedule` function to include the file or directory for which you wish to save timestamped backups on a scheduled basis to your local environment or remotely to Oracle Object Storage.
 
-2. Run this script in a background process. Make a note of the process ID that your process is using.
+	```
+ 	# Change directory to the folder you downloaded, containing the backup script.
+ 	cd backup_scheduler
+ 	```
+	```
+ 	# Open the backup script using an editor. In this example, vi is used.
+ 	vi backup.py
+ 	```
+
+3. Execute `backup.py` in a background process. Make a note of the process ID that your process is using.
 	
  	```
 	nohup python -u backup.py > backup_stdouterr.log 2>&1 &
 	```
  
-3. Capture the process ID that the process is using, replacing the placeholder `MY_PROCESS_ID` with your own.
+4. Capture the process ID that the process is using, replacing the placeholder `MY_PROCESS_ID` with your own.
 	
  	```
 	export backup_pid=MY_PROCESS_ID
 	```
  
-4. Monitor the status of your process:
+5. Monitor the status of your process:
 	
  	```
 	ps aux | grep $backup_pid
 	```
  
-5. Monitor your backup location in Oracle Object Storage, or use the following command to monitor a backup location within your local environment. Replace the placeholder `MY_LOCAL_BACKUP_LOCATION` with your own.
+6. Monitor your backup location in Oracle Object Storage, or use the following command to monitor a backup location within your local environment. Replace the placeholder `MY_LOCAL_BACKUP_LOCATION` with your own.
 	
  	```
 	ls -a1 MY_LOCAL_BACKUP_LOCATION
 	```
  
-6. To stop creating and deleting backups, terminate the process:
+7. To stop creating and deleting backups, terminate the process:
 	
  	```
 	kill -9 $backup_pid
 	```
 
-7. To resume creating and deleting backups, repeat step 2.
+8. To resume creating and deleting backups, repeat step 2.
 
-8. To debug, review the contents of `backup_stdouterr.log`
+9. To debug, review the contents of `backup_stdouterr.log`
 	
  	```
 	vi backup_stdouterr.log
