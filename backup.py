@@ -22,24 +22,25 @@ def get_suffix():
     date_suffix=datetime.datetime.today().strftime("%Y_%m_%d_%H:%M:%S")
     return date_suffix
 
-def create_backups_object_storage(src_object_path, backups_dir, bucket_name):
-    print(f"\nCREATE_BACKUPS_OBJECT_STORAGE: src_object_path='{src_object_path}', backups_dir='{backups_dir}', bucket_name='{bucket_name}'\n")
+def create_backups_object_storage(src_path, backups_dir, bucket_name):
+    print(f"\nCREATE_BACKUPS_OBJECT_STORAGE: src_path='{src_path}', backups_dir='{backups_dir}', bucket_name='{bucket_name}'\n")
     date_suffix=get_suffix()
 
-    basename=os.path.basename(src_object_path)
+    basename=os.path.basename(src_path)
     # check if file
-    if os.path.isfile(src_object_path):
-      with open(src_object_path, "rb") as file:
+    if os.path.isfile(src_path):
+      with open(src_path, "rb") as file:
           dest_file_path=f"{backups_dir}/{basename}/{basename}.{date_suffix}"
           try:
             os_client.put_object(namespace_name=os_namespace, bucket_name=bucket_name, object_name=dest_file_path, put_object_body=file)
-            print(f"Successfully copied file '{src_object_path}' to '{dest_file_path}' in bucket '{bucket_name}'.")
+            print(f"Successfully copied file '{src_path}' to '{dest_file_path}' in bucket '{bucket_name}'.")
           except:
-            print(f"Error: Failed to copy '{src_object_path}' to '{dest_file_path}' in bucket '{bucket_name}'.")
+            print(f"Error: Failed to copy file '{src_path}' to '{dest_file_path}' in bucket '{bucket_name}'.")
 
     # check if folder
-    elif os.path.isdir(src_object_path):
-      for root, _, files in os.walk(src_object_path):
+    # todo: resolve BUG101: add ability to preserve middle directories. Middle directories are currently ignored, such that folder1/folder2/file.txt would get copied to folder1/file.txt
+    elif os.path.isdir(src_path):
+      for root, _, files in os.walk(src_path):
           files[:] = [f for f in files if not f.startswith('.ipynb_checkpoints')]
           try:
             for file_name in files:
@@ -49,21 +50,21 @@ def create_backups_object_storage(src_object_path, backups_dir, bucket_name):
                     dest_file_path=re.sub(r'/+', '/', dest_file_path)
                     try:
                       os_client.put_object(namespace_name=os_namespace, bucket_name=bucket_name, object_name=dest_file_path, put_object_body=file)
-                      print(f"Successfully copied file '{src_object_path}/{file_name}' to '{dest_file_path}' in bucket '{bucket_name}'")
+                      print(f"Successfully copied file '{src_path}/{file_name}' to '{dest_file_path}' in bucket '{bucket_name}'")
                     except:
-                      print(f"Error: Failed to copy '{src_object_path}/{file_name}' to '{dest_file_path}' in bucket '{bucket_name}'")
-                print(f"Successfully copied '{src_object_path}' to '{backups_dir}/{basename} in bucket '{bucket_name}'")
+                      print(f"Error: Failed to copy '{src_path}/{file_name}' to '{dest_file_path}' in bucket '{bucket_name}'")
+                print(f"Successfully copied '{src_path}' to '{backups_dir}/{basename} in bucket '{bucket_name}'")
           except:
-            print(f"Error: Failed to copy '{src_object_path}' to '{backups_dir}/{basename} in bucket '{bucket_name}'")
+            print(f"Error: Failed to copy file '{src_path}' to '{backups_dir}/{basename} in bucket '{bucket_name}'")
     else:
-      print(f"No upload performed. The specified path '{src_object_path}' is neither a file nor a folder.")
+      print(f"No upload performed. The specified path '{src_path}' is neither a file nor a folder.")
     return
 
-def create_backups_local(src_object_path, backups_dir, max_num_backups=4):
-    print(f"\nCREATE_BACKUPS_LOCAL: src_object_path='{src_object_path}', backups_dir='{backups_dir}', max_num_backups='{max_num_backups}'\n")
+def create_backups_local(src_path, backups_dir, max_num_backups=4):
+    print(f"\nCREATE_BACKUPS_LOCAL: src_path='{src_path}', backups_dir='{backups_dir}', max_num_backups='{max_num_backups}'\n")
     date_suffix=get_suffix()
 
-    basename=os.path.basename(src_object_path)
+    basename=os.path.basename(src_path)
     # Check if the following folder exists
     dest_folder_path=f"{backups_dir}/{basename}"
     if not os.path.exists(dest_folder_path):
@@ -74,19 +75,20 @@ def create_backups_local(src_object_path, backups_dir, max_num_backups=4):
       except:
         print(f"Error: Folder '{dest_folder_path}' could not be created")
     # check if file
-    if os.path.isfile(src_object_path):
+    if os.path.isfile(src_path):
       dest_file_path=f"{dest_folder_path}/{basename}.{date_suffix}"
       try:
-        shutil.copyfile(src_object_path, dest_file_path)
-        print(f"Successfully copied '{src_object_path}' to '{dest_file_path}'")
+        shutil.copyfile(src_path, dest_file_path)
+        print(f"Successfully copied '{src_path}' to '{dest_file_path}'")
       except:
-        print(f"Error: failed to copy '{src_object_path}' to '{dest_file_path}'")
+        print(f"Error: failed to copy '{src_path}' to '{dest_file_path}'")
       # remove old
       delete_backups_local(dest_folder_path, max_num_backups)
 
     # check if folder
-    elif os.path.isdir(src_object_path):
-      for root, _, files in os.walk(src_object_path):
+    # todo: resolve BUG101
+    elif os.path.isdir(src_path):
+      for root, _, files in os.walk(src_path):
           files[:] = [f for f in files if not f.startswith('.ipynb_checkpoints')]
           for file_name in files:
               dest_folder_path_2=f"{dest_folder_path}/{file_name}"
@@ -99,17 +101,17 @@ def create_backups_local(src_object_path, backups_dir, max_num_backups=4):
                 except:
                  print(f"Error: Folder '{dest_folder_path_2}' could not be created")
               try:
-                shutil.copyfile(f"{src_object_path}/{file_name}", dest_file_path)
-                print(f"Successfully copied '{src_object_path}/{file_name}' to '{dest_file_path}'")
+                shutil.copyfile(f"{src_path}/{file_name}", dest_file_path)
+                print(f"Successfully copied '{src_path}/{file_name}' to '{dest_file_path}'")
               except:
-                print(f"Error: failed to copy '{src_object_path}/{file_name}' to '{dest_file_path}'")
+                print(f"Error: failed to copy '{src_path}/{file_name}' to '{dest_file_path}'")
               # remove old
               delete_backups_local(dest_folder_path_2, max_num_backups)
     else:
-      print(f"No upload performed. The specified path '{src_object_path}' is neither a file nor a folder.")
+      print(f"No upload performed. The specified item '{src_path}' is neither a file nor a folder.")
 
 def delete_backups_local(dest_folder_path, max_num_backups):
-    print(f"\nDELETE_BACKUPS_LOCAL: src_object_path='{dest_folder_path}', max_num_backups='{max_num_backups}'\n")
+    print(f"\nDELETE_BACKUPS_LOCAL: src_path='{dest_folder_path}', max_num_backups='{max_num_backups}'\n")
 
     list_of_files = os.listdir(dest_folder_path)
     full_path = ["{0}/{1}".format(dest_folder_path, x) for x in list_of_files]
@@ -133,19 +135,19 @@ def my_schedule():
     # Local Backup
 
     ## Back up a file ("/home/datascience/mynotebook.ipynb") at minute 00 of every hour to a local folder ("/home/datascience/mybackups"). Retain 336 backups, i.e. 2 weeks of hourly backups
-    schedule.every().hour.at(":00").do(create_backups_local, src_object_path="/home/datascience/mynotebook.ipynb",backups_dir="/home/datascience/mybackups", max_num_backups=336)
+    schedule.every().hour.at(":00").do(create_backups_local, src_path="/home/datascience/mynotebook.ipynb",backups_dir="/home/datascience/mybackups", max_num_backups=336)
 
     ## Back up a folder ("/home/datascience/myfolder") at minute 30 of every hour to a local folder ("/home/datascience/mybackups"). Retain 336 backups, i.e. 2 weeks of hourly backups
-    schedule.every().hour.at(":30").do(create_backups_local, src_object_path="/home/datascience/myfolder",backups_dir="/home/datascience/mybackups", max_num_backups=336)
+    schedule.every().hour.at(":30").do(create_backups_local, src_path="/home/datascience/myfolder",backups_dir="/home/datascience/mybackups", max_num_backups=336)
     
     
     # Remote Backup to Oracle Object Storage
     
     ## Back up a file ("/home/datascience/mynotebook.ipynb") at minute 00 of every hour to a remote folder ("mybackups") in an Object Storage bucket ("mybucket")
-    schedule.every().hour.at(":00").do(create_backups_object_storage, src_object_path="/home/datascience/mynotebook.ipynb",backups_dir="mybackups",bucket_name="mybucket")
+    schedule.every().hour.at(":00").do(create_backups_object_storage, src_path="/home/datascience/mynotebook.ipynb",backups_dir="mybackups",bucket_name="mybucket")
     
     ## Back up a folder ("/home/datascience/myfolder") at minute 30 of every hour to a remote folder ("mybackups") in an Object Storage bucket ("mybucket")
-    schedule.every().hour.at(":30").do(create_backups_object_storage, src_object_path="/home/datascience/myfolder",backups_dir="mybackups",bucket_name="mybucket")
+    schedule.every().hour.at(":30").do(create_backups_object_storage, src_path="/home/datascience/myfolder",backups_dir="mybackups",bucket_name="mybucket")
 
 def main():
     my_schedule()
