@@ -24,11 +24,11 @@ Save timestamped backups of your files and folders on a scheduled basis to your 
 1. In `backup.py`, edit the entries under the `my_schedule` function to include the file or directory for which you wish to save timestamped backups on a scheduled basis to your local environment or remotely to Oracle Object Storage.
 
 	```
- 	**# Change directory to the folder you downloaded, containing the backup script.**
+ 	# Change directory to the folder you downloaded, containing the backup script.
  	cd backup_scheduler
  	```
 	```
- 	**# Open the backup script using an editor. In this example, vi is used.**
+ 	# Open the backup script using an editor. In this example, vi is used.
  	vi backup.py
  	```
 
