@@ -33,9 +33,9 @@ def create_backups_object_storage(src_path, backups_dir, bucket_name):
           dest_file_path=f"{backups_dir}/{basename}/{basename}.{date_suffix}"
           try:
             os_client.put_object(namespace_name=os_namespace, bucket_name=bucket_name, object_name=dest_file_path, put_object_body=file)
-            print(f"Successfully copied file '{src_path}' to destination object '{dest_file_path}' in bucket '{bucket_name}'.")
+            print(f"Successfully copied file '{src_path}' to remote destination object '{dest_file_path}' in bucket '{bucket_name}'.")
           except:
-            print(f"Error: Failed to copy file '{src_path}' to destination object '{dest_file_path}' in bucket '{bucket_name}'.")
+            print(f"Error: Failed to copy file '{src_path}' to remote destination object '{dest_file_path}' in bucket '{bucket_name}'.")
 
     # check if folder
     # todo: resolve BUG101: add ability to preserve middle directories. Middle directories are currently ignored, such that folder1/folder2/file.txt would get copied to folder1/file.txt
@@ -49,14 +49,14 @@ def create_backups_object_storage(src_path, backups_dir, bucket_name):
                     dest_file_path=re.sub(r'/+', '/', dest_file_path)
                     try:
                       os_client.put_object(namespace_name=os_namespace, bucket_name=bucket_name, object_name=dest_file_path, put_object_body=file)
-                      print(f"Successfully copied file '{src_path}/{file_name}' to destination object '{dest_file_path}' in bucket '{bucket_name}'")
+                      print(f"Successfully copied nested file '{src_path}/{file_name}' to remote destination object '{dest_file_path}' in bucket '{bucket_name}'")
                     except:
-                      print(f"Error: Failed to copy '{src_path}/{file_name}' to destination object '{dest_file_path}' in bucket '{bucket_name}'")
-                print(f"Successfully copied folder '{src_path}' to destination folder '{backups_dir}/{basename} in bucket '{bucket_name}'")
+                      print(f"Error: Failed to copy nested file '{src_path}/{file_name}' to remote destination object '{dest_file_path}' in bucket '{bucket_name}'")
+                print(f"Successfully copied folder '{src_path}' to remote destination folder '{backups_dir}/{basename} in bucket '{bucket_name}'")
           except:
-            print(f"Error: Failed to copy file '{src_path}' to '{backups_dir}/{basename}' in bucket '{bucket_name}'")
+            print(f"Error: Failed to copy folder '{src_path}' to remote destination folder '{backups_dir}/{basename}' in bucket '{bucket_name}'")
     else:
-      print(f"No upload performed. The specified path '{src_path}' is neither a file nor a folder.")
+      print(f"No remote copy performed. The specified path '{src_path}' is neither a file nor a folder.")
     return
 
 def create_backups_local(src_path, backups_dir, max_num_backups=4):
@@ -70,9 +70,9 @@ def create_backups_local(src_path, backups_dir, max_num_backups=4):
       # If it doesn't exist, create the folder
       try:
         os.makedirs(dest_folder_path)
-        print(f"Successfully created '{dest_folder_path}'")
+        print(f"Successfully created local destination folder '{dest_folder_path}'")
       except:
-        print(f"Error: Folder '{dest_folder_path}' could not be created")
+        print(f"Error: Local destination folder '{dest_folder_path}' could not be created")
     # check if file
     if os.path.isfile(src_path):
       dest_file_path=f"{dest_folder_path}/{basename}.{date_suffix}"
@@ -80,7 +80,7 @@ def create_backups_local(src_path, backups_dir, max_num_backups=4):
         shutil.copyfile(src_path, dest_file_path)
         print(f"Successfully copied file '{src_path}' to local destination file '{dest_file_path}'")
       except:
-        print(f"Error: failed to copy file '{src_path}' to local destination file '{dest_file_path}'")
+        print(f"Error: Failed to copy file '{src_path}' to local destination file '{dest_file_path}'")
       # remove old
       delete_backups_local(dest_folder_path, max_num_backups)
 
@@ -96,20 +96,21 @@ def create_backups_local(src_path, backups_dir, max_num_backups=4):
                     # If it doesn't exist, create the folder
                     try:
                       os.makedirs(dest_folder_path_2)
-                      print(f"Successfully created '{dest_folder_path_2}'")
+                      print(f"Successfully created nested local destination folder '{dest_folder_path_2}'")
                     except:
-                     print(f"Error: Folder '{dest_folder_path_2}' could not be created")
+                     print(f"Error: Nested local destination folder '{dest_folder_path_2}' could not be created")
                   try:
                     shutil.copyfile(f"{src_path}/{file_name}", dest_file_path)
-                    print(f"Successfully copied file '{src_path}/{file_name}' to local destination file '{dest_file_path}'")
+                    print(f"Successfully copied nested file '{src_path}/{file_name}' to local destination file '{dest_file_path}'")
                   except:
-                    print(f"Error: failed to copy file '{src_path}/{file_name}' to local destination file '{dest_file_path}'")
+                    print(f"Error: failed to copy nested file '{src_path}/{file_name}' to local destination file '{dest_file_path}'")
                   # remove old
                   delete_backups_local(dest_folder_path_2, max_num_backups)
+            print(f"Successfully copied folder '{src_path}' to local destination folder '{backups_dir}/{basename}'")
         except:
-            print(f"Successfully copied folder '{src_path}' to '{backups_dir}/{basename}' in bucket '{bucket_name}'")
+            print(f"Error: Failed to copy folder '{src_path}' to local destination folder '{backups_dir}/{basename}'")
     else:
-      print(f"No upload performed. The specified path '{src_path}' is neither a file nor a folder.")
+      print(f"No local copy performed. The specified path '{src_path}' is neither a file nor a folder.")
 
 def delete_backups_local(dest_folder_path, max_num_backups):
     print(f"\nDELETE_BACKUPS_LOCAL: src_path='{dest_folder_path}', max_num_backups='{max_num_backups}'\n")
