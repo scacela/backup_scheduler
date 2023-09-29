@@ -41,7 +41,6 @@ def create_backups_object_storage(src_path, backups_dir, bucket_name):
     # todo: resolve BUG101: add ability to preserve middle directories. Middle directories are currently ignored, such that folder1/folder2/file.txt would get copied to folder1/file.txt
     elif os.path.isdir(src_path):
       for root, _, files in os.walk(src_path):
-          files[:] = [f for f in files if not f.startswith('.ipynb_checkpoints')]
           try:
             for file_name in files:
                 with open(os.path.join(root, file_name), "rb") as file:
@@ -53,9 +52,9 @@ def create_backups_object_storage(src_path, backups_dir, bucket_name):
                       print(f"Successfully copied file '{src_path}/{file_name}' to '{dest_file_path}' in bucket '{bucket_name}'")
                     except:
                       print(f"Error: Failed to copy '{src_path}/{file_name}' to '{dest_file_path}' in bucket '{bucket_name}'")
-                print(f"Successfully copied '{src_path}' to '{backups_dir}/{basename} in bucket '{bucket_name}'")
+                print(f"Successfully copied folder '{src_path}' to '{backups_dir}/{basename} in bucket '{bucket_name}'")
           except:
-            print(f"Error: Failed to copy file '{src_path}' to '{backups_dir}/{basename} in bucket '{bucket_name}'")
+            print(f"Error: Failed to copy file '{src_path}' to '{backups_dir}/{basename}' in bucket '{bucket_name}'")
     else:
       print(f"No upload performed. The specified path '{src_path}' is neither a file nor a folder.")
     return
@@ -79,9 +78,9 @@ def create_backups_local(src_path, backups_dir, max_num_backups=4):
       dest_file_path=f"{dest_folder_path}/{basename}.{date_suffix}"
       try:
         shutil.copyfile(src_path, dest_file_path)
-        print(f"Successfully copied '{src_path}' to '{dest_file_path}'")
+        print(f"Successfully copied file '{src_path}' to '{dest_file_path}'")
       except:
-        print(f"Error: failed to copy '{src_path}' to '{dest_file_path}'")
+        print(f"Error: failed to copy file '{src_path}' to '{dest_file_path}'")
       # remove old
       delete_backups_local(dest_folder_path, max_num_backups)
 
@@ -89,26 +88,28 @@ def create_backups_local(src_path, backups_dir, max_num_backups=4):
     # todo: resolve BUG101
     elif os.path.isdir(src_path):
       for root, _, files in os.walk(src_path):
-          files[:] = [f for f in files if not f.startswith('.ipynb_checkpoints')]
-          for file_name in files:
-              dest_folder_path_2=f"{dest_folder_path}/{file_name}"
-              dest_file_path=f"{dest_folder_path_2}/{file_name}.{date_suffix}"
-              if not os.path.exists(dest_folder_path_2):
-                # If it doesn't exist, create the folder
-                try:
-                  os.makedirs(dest_folder_path_2)
-                  print(f"Successfully created '{dest_folder_path_2}'")
-                except:
-                 print(f"Error: Folder '{dest_folder_path_2}' could not be created")
-              try:
-                shutil.copyfile(f"{src_path}/{file_name}", dest_file_path)
-                print(f"Successfully copied '{src_path}/{file_name}' to '{dest_file_path}'")
-              except:
-                print(f"Error: failed to copy '{src_path}/{file_name}' to '{dest_file_path}'")
-              # remove old
-              delete_backups_local(dest_folder_path_2, max_num_backups)
+          try:
+              for file_name in files:
+                  dest_folder_path_2=f"{dest_folder_path}/{file_name}"
+                  dest_file_path=f"{dest_folder_path_2}/{file_name}.{date_suffix}"
+                  if not os.path.exists(dest_folder_path_2):
+                    # If it doesn't exist, create the folder
+                    try:
+                      os.makedirs(dest_folder_path_2)
+                      print(f"Successfully created '{dest_folder_path_2}'")
+                    except:
+                     print(f"Error: Folder '{dest_folder_path_2}' could not be created")
+                  try:
+                    shutil.copyfile(f"{src_path}/{file_name}", dest_file_path)
+                    print(f"Successfully copied file '{src_path}/{file_name}' to '{dest_file_path}'")
+                  except:
+                    print(f"Error: failed to copy file '{src_path}/{file_name}' to '{dest_file_path}'")
+                  # remove old
+                  delete_backups_local(dest_folder_path_2, max_num_backups)
+        except:
+            print(f"Successfully copied folder '{src_path}' to '{backups_dir}/{basename}' in bucket '{bucket_name}'")
     else:
-      print(f"No upload performed. The specified item '{src_path}' is neither a file nor a folder.")
+      print(f"No upload performed. The specified path '{src_path}' is neither a file nor a folder.")
 
 def delete_backups_local(dest_folder_path, max_num_backups):
     print(f"\nDELETE_BACKUPS_LOCAL: src_path='{dest_folder_path}', max_num_backups='{max_num_backups}'\n")
@@ -127,7 +128,7 @@ def delete_backups_local(dest_folder_path, max_num_backups):
           except:
             print(f"Error: Failed to remove oldest file '{oldest_file}'")
         else:
-          print(f"No removal performed. The oldest item '{oldest_file}' is neither a file nor a folder")
+          print(f"No removal performed. The path representing the oldest item '{oldest_file}' is neither a file nor a folder")
 
 def my_schedule():
 
