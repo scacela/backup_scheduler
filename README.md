@@ -1,44 +1,48 @@
 # backup_scheduler
-Save backups of your files and folders on a scheduled basis to your local environment. Specify the maximum number of backups to retain, and automatically dump the oldest backups.
+Save timestamped backups of your files and folders on a scheduled basis to your local environment or remotely to Oracle Object Storage. For local backups, specify the maximum number of backups to retain, and automatically dump the oldest backups. Manage your Oracle Object Storage backups using Oracle Object Storage Lifecycle Policy Rules and Retention Rules.
 
 ## Instructions
+
+### Prerequisites
+
 1. Clone this repository.
 	```
 	git clone https://github.com/scacela/backup_scheduler.git
 	```
-2. Edit `backup.py`, adding an entry under the `my_schedule` function using your desired parameters and backup schedule. Consider this example:
-	```
-	# Back-up a file or directory to directory_A at the first minute of every hour, and retain backups up to one week old.
-	schedule.every().hour.at(":00").do(create_backup,"/path/to/file_or_directory/to/backup", "/path/to/backup/directory_A", 168)
-	```
-	a. Identify the file or directory you wish to back-up, and replace `/path/to/file_or_directory/to/backup` with the path to this file or directory.
-	
-	b. Identify a directory to which you wish to save your backups, and replace `/path/to/backup/directory_A` with the path to this directory. Be sure to use a different backup directory than any others specified for other files or folders you are backing up in this script.
 
-	*Note*: If you are backing up a file, the backup directory must already exist. If you are backing up a directory, the backup directory will be created automatically by this script.
-	
-	c. Adjust the schedule to your requirements. Refer to the documentation for the [scheduler](https://pypi.org/project/schedule/) library, which this script leverages.
-	
-	d. Adjust the number (168, in the example shown) to the maximum number of backups you wish to retain in your backup directory. As more backups are created, older backups are automatically deleted so that the maximum number of backups you specify is not exceeded.
+2. For use with Oracle Object Storage, ensure that your environment is authenticated for the Object Storage connection. This script leverages resource principal authentication by default.
 
-3. Run `backup.py` in a background process. Make note of the process ID that prints to the console after running the command.
+### Steps
+
+1. Edit the entries under the 'my_schedule' function to include the file or directory for which you wish to save timestamped back-ups on a scheduled basis to your local environment or remotely to Oracle Object Storage.
+
+2. Run this script in a background process. Make a note of the process ID that your process is using.
+ 	```
+	nohup python -u backup.py > backup_stdouterr.log 2>&1 &
 	```
-	nohup python -u backup.py > .backups_stdouterr.log 2>&1 &
+3. Capture the process ID that the process is using, replacing the placeholder `YOUR_PROCESS_ID` with your own.
 	```
-4. Store the process ID of the process you created in an environment variable for easier access. Be sure to replace `YOUR_PROCESS_ID` with your own process ID.
+	export backup_pid=YOUR_PROCESS_ID
 	```
-	export backups_pid=YOUR_PROCESS_ID
+ 
+4. Monitor the status of your process:
 	```
-5. Monitor the status of your process using the process ID you captured:
+	ps aux | grep $backup_pid
 	```
-	ps aux | grep $backups_pid
+ 
+5. Monitor your backup location in Oracle Object Storage, or use the following command to monitor a backup location on your local environment. Replace the placeholder `YOUR_LOCAL_BACKUP_LOCATION` with your own.
 	```
-6. Monitor your backup directory for backups:
+	ls -a1 YOUR_LOCAL_BACKUP_LOCATION
 	```
-	ls -a1 /path/to/your/backup/directory
+ 
+6. To stop creating and deleting backups, terminate the process:
 	```
-7. To stop creating and deleting backups, terminate the process you created:
+	kill -9 $backup_pid
 	```
-	kill -9 $backups_pid
+
+7. To resume creating and deleting backups, repeat step 2.
+
+8. To debug, review the contents of 'backup_stdouterr.log'
 	```
-8. To resume creating and deleting backups, repeat `step 3`.
+	vi .backup_stdouterr.log
+	```
