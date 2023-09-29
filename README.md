@@ -3,7 +3,7 @@ Save timestamped backups of your files and folders on a scheduled basis to your 
 
 ## Prerequisites
 
-1. Clone this repository.
+1. Clone this repository to the environment from which you will be taking backups.
 	
  	```
 	git clone https://github.com/scacela/backup_scheduler.git
@@ -13,7 +13,7 @@ Save timestamped backups of your files and folders on a scheduled basis to your 
 
 3. For use with Oracle Object Storage, ensure that your environment is able to access Oracle Object Storage via either the public internet, or if you will be taking backups from within your Oracle Cloud environment, you may use a Service Gateway to access Oracle Object Storage over the Oracle Services Network (OSN).
 
-4. Install `scheduler` to the environment from which you will be taking backups.
+4. Install `scheduler` to your environment.
 
 	```
 	pip install scheduler
@@ -24,11 +24,11 @@ Save timestamped backups of your files and folders on a scheduled basis to your 
 1. In `backup.py`, edit the entries under the `my_schedule` function to include the file or directory for which you wish to save timestamped backups on a scheduled basis to your local environment or remotely to Oracle Object Storage.
 
 	```
- 	# Change directory to the folder you downloaded, containing the backup script.
+ 	**# Change directory to the folder you downloaded, containing the backup script.**
  	cd backup_scheduler
  	```
 	```
- 	# Open the backup script using an editor. In this example, vi is used.
+ 	**# Open the backup script using an editor. In this example, vi is used.**
  	vi backup.py
  	```
 
@@ -64,7 +64,7 @@ Save timestamped backups of your files and folders on a scheduled basis to your 
 
 8. To resume creating and deleting backups, repeat step 2.
 
-9. To debug, review the contents of `backup_stdouterr.log`
+9. To monitor logs, review the contents of `backup_stdouterr.log`.
 	
  	```
 	vi backup_stdouterr.log
