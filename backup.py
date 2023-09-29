@@ -106,9 +106,9 @@ def create_backups_local(src_path, backups_dir, max_num_backups=4):
                     print(f"Error: failed to copy nested file '{src_path}/{file_name}' to local destination file '{dest_file_path}'")
                   # remove old
                   delete_backups_local(dest_folder_path_2, max_num_backups)
-            print(f"Successfully copied folder '{src_path}' to local destination folder '{backups_dir}/{basename}'")
-        except:
-            print(f"Error: Failed to copy folder '{src_path}' to local destination folder '{backups_dir}/{basename}'")
+              print(f"Successfully copied folder '{src_path}' to local destination folder '{backups_dir}/{basename}'")
+          except:
+              print(f"Error: Failed to copy folder '{src_path}' to local destination folder '{backups_dir}/{basename}'")
     else:
       print(f"No local copy performed. The specified path '{src_path}' is neither a file nor a folder.")
 
