@@ -21,33 +21,33 @@ Save timestamped backups of your files and folders on a scheduled basis to your 
 	nohup python -u backup.py > backup_stdouterr.log 2>&1 &
 	```
  
-4. Capture the process ID that the process is using, replacing the placeholder `MY_PROCESS_ID` with your own.
+3. Capture the process ID that the process is using, replacing the placeholder `MY_PROCESS_ID` with your own.
 	
  	```
 	export backup_pid=MY_PROCESS_ID
 	```
  
-5. Monitor the status of your process:
+4. Monitor the status of your process:
 	
  	```
 	ps aux | grep $backup_pid
 	```
  
-6. Monitor your backup location in Oracle Object Storage, or use the following command to monitor a backup location within your local environment. Replace the placeholder `MY_LOCAL_BACKUP_LOCATION` with your own.
+5. Monitor your backup location in Oracle Object Storage, or use the following command to monitor a backup location within your local environment. Replace the placeholder `MY_LOCAL_BACKUP_LOCATION` with your own.
 	
  	```
 	ls -a1 MY_LOCAL_BACKUP_LOCATION
 	```
  
-7. To stop creating and deleting backups, terminate the process:
+6. To stop creating and deleting backups, terminate the process:
 	
  	```
 	kill -9 $backup_pid
 	```
 
-8. To resume creating and deleting backups, repeat step 2.
+7. To resume creating and deleting backups, repeat step 2.
 
-9. To debug, review the contents of `backup_stdouterr.log`
+8. To debug, review the contents of `backup_stdouterr.log`
 	
  	```
 	vi backup_stdouterr.log
