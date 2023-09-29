@@ -1,9 +1,7 @@
 # backup_scheduler
 Save timestamped backups of your files and folders on a scheduled basis to your local environment or remotely to Oracle Object Storage. For local backups, specify the maximum number of backups to retain, and automatically dump the oldest backups. Manage your Oracle Object Storage backups using Oracle Object Storage Lifecycle Policy Rules and Retention Rules.
 
-## Instructions
-
-### Prerequisites
+## Prerequisites
 
 1. Clone this repository.
 	
@@ -13,7 +11,7 @@ Save timestamped backups of your files and folders on a scheduled basis to your 
 
 2. For use with Oracle Object Storage, ensure that your environment is authenticated for the Object Storage connection. This script leverages resource principal authentication by default.
 
-### Steps
+## Usage Instructions
 
 1. Edit the entries under the `my_schedule` function to include the file or directory for which you wish to save timestamped back-ups on a scheduled basis to your local environment or remotely to Oracle Object Storage.
 
@@ -52,5 +50,5 @@ Save timestamped backups of your files and folders on a scheduled basis to your 
 9. To debug, review the contents of `backup_stdouterr.log`
 	
  	```
-	vi .backup_stdouterr.log
+	vi backup_stdouterr.log
 	```
