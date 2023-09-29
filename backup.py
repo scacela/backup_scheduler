@@ -33,9 +33,9 @@ def create_backups_object_storage(src_path, backups_dir, bucket_name):
           dest_file_path=f"{backups_dir}/{basename}/{basename}.{date_suffix}"
           try:
             os_client.put_object(namespace_name=os_namespace, bucket_name=bucket_name, object_name=dest_file_path, put_object_body=file)
-            print(f"Successfully copied file '{src_path}' to '{dest_file_path}' in bucket '{bucket_name}'.")
+            print(f"Successfully copied file '{src_path}' to destination object '{dest_file_path}' in bucket '{bucket_name}'.")
           except:
-            print(f"Error: Failed to copy file '{src_path}' to '{dest_file_path}' in bucket '{bucket_name}'.")
+            print(f"Error: Failed to copy file '{src_path}' to destination object '{dest_file_path}' in bucket '{bucket_name}'.")
 
     # check if folder
     # todo: resolve BUG101: add ability to preserve middle directories. Middle directories are currently ignored, such that folder1/folder2/file.txt would get copied to folder1/file.txt
@@ -49,10 +49,10 @@ def create_backups_object_storage(src_path, backups_dir, bucket_name):
                     dest_file_path=re.sub(r'/+', '/', dest_file_path)
                     try:
                       os_client.put_object(namespace_name=os_namespace, bucket_name=bucket_name, object_name=dest_file_path, put_object_body=file)
-                      print(f"Successfully copied file '{src_path}/{file_name}' to '{dest_file_path}' in bucket '{bucket_name}'")
+                      print(f"Successfully copied file '{src_path}/{file_name}' to destination object '{dest_file_path}' in bucket '{bucket_name}'")
                     except:
-                      print(f"Error: Failed to copy '{src_path}/{file_name}' to '{dest_file_path}' in bucket '{bucket_name}'")
-                print(f"Successfully copied folder '{src_path}' to '{backups_dir}/{basename} in bucket '{bucket_name}'")
+                      print(f"Error: Failed to copy '{src_path}/{file_name}' to destination object '{dest_file_path}' in bucket '{bucket_name}'")
+                print(f"Successfully copied folder '{src_path}' to destination folder '{backups_dir}/{basename} in bucket '{bucket_name}'")
           except:
             print(f"Error: Failed to copy file '{src_path}' to '{backups_dir}/{basename}' in bucket '{bucket_name}'")
     else:
@@ -78,9 +78,9 @@ def create_backups_local(src_path, backups_dir, max_num_backups=4):
       dest_file_path=f"{dest_folder_path}/{basename}.{date_suffix}"
       try:
         shutil.copyfile(src_path, dest_file_path)
-        print(f"Successfully copied file '{src_path}' to '{dest_file_path}'")
+        print(f"Successfully copied file '{src_path}' to local destination file '{dest_file_path}'")
       except:
-        print(f"Error: failed to copy file '{src_path}' to '{dest_file_path}'")
+        print(f"Error: failed to copy file '{src_path}' to local destination file '{dest_file_path}'")
       # remove old
       delete_backups_local(dest_folder_path, max_num_backups)
 
@@ -101,9 +101,9 @@ def create_backups_local(src_path, backups_dir, max_num_backups=4):
                      print(f"Error: Folder '{dest_folder_path_2}' could not be created")
                   try:
                     shutil.copyfile(f"{src_path}/{file_name}", dest_file_path)
-                    print(f"Successfully copied file '{src_path}/{file_name}' to '{dest_file_path}'")
+                    print(f"Successfully copied file '{src_path}/{file_name}' to local destination file '{dest_file_path}'")
                   except:
-                    print(f"Error: failed to copy file '{src_path}/{file_name}' to '{dest_file_path}'")
+                    print(f"Error: failed to copy file '{src_path}/{file_name}' to local destination file '{dest_file_path}'")
                   # remove old
                   delete_backups_local(dest_folder_path_2, max_num_backups)
         except:
