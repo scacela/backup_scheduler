@@ -20,7 +20,7 @@ Always have a backup plan. Never lose quality work.
     
 2. Ensure that your environment is authorized to access Oracle Object Storage using either api keys and an OCI config file within the `~/.oci` directory, or resource principal authentication.
 
-3. Customize the `config.ini` file to configure your backup settings. Use a `[section]` or multiple to specify unique backup profiles.
+3. Customize the `config.ini` file to configure your backup settings. Use a `[section]` or multiple to define unique backup profiles.
 
 4. Ensure that the required Python packages (`scheduler` and `oci`) are installed by executing the following command:
 
