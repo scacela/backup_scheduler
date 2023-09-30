@@ -45,15 +45,13 @@ Always have a backup plan. Never lose quality work.
 
 7. Check `backup_stdouterr.log` to monitor the logs associated with your latest process where `backup.py` is running.
 
-8. You can adjust the configurations in `config.ini` as needed. After updates are made to `config.ini`, repeat step 6 to perform backups based on your updated configurations.
-
-9. Monitor details about the process(es) that your script is running on:
+8. Monitor details about the process(es) that your script is running on:
 
     ```
     ps aux | grep backup.py
     ```
 
-10. To stop producing backups from a particular process, terminate the process by executing the following command, replacing `MY_PROCESS_ID` with your own.
+9. To stop producing backups from a particular process, terminate the process by executing the following command, replacing `MY_PROCESS_ID` with your own.
 
     ```
     kill -9 MY_PROCESS_ID
