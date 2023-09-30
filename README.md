@@ -39,7 +39,7 @@ Always have a backup plan. Never lose quality work.
     ```
     nohup python -u backup.py > backup_stdouterr.log 2>&1 &
     ```
-    > **Note:** Make a note of the process id that your script is running on.
+    > **Note:** If you wish to track the process that your script is running on, make a note of the process id.
 
 7. Check `backup_stdouterr.log` to monitor the logs associated with your latest process where `backup.py` is running.
 
