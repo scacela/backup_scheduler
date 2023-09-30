@@ -28,7 +28,7 @@ Always have a backup plan. Never lose quality work.
     pip install scheduler oci
     ```
 
-5. Change your directory to the folder containing the Python script `backup_script.py`:
+5. Change your directory to the folder containing the Python script `backup.py`:
 
     ```
     cd backup_scheduler
