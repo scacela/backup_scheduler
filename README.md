@@ -39,7 +39,7 @@ Always have a backup plan. Never lose quality work.
     ```
     nohup python -u backup.py > backup_stdouterr.log 2>&1 &
     ```
-    > **Note:** If you wish to track the process that your script is running on, make a note of the process id.
+    > **Note:** If you wish to track the process that your script is running on for monitoring and termination, make a note of the process id.
 
 7. Check `backup_stdouterr.log` to monitor the logs associated with your latest process where `backup.py` is running.
 
@@ -51,7 +51,7 @@ Always have a backup plan. Never lose quality work.
     ps aux | grep backup.py
     ```
 
-10. To stop the script from producing backups from a particular process, terminate the process by executing the following command, replacing `MY_PROCESS_ID` with your own.
+10. To stop producing backups from a particular process, terminate the process by executing the following command, replacing `MY_PROCESS_ID` with your own.
 
     ```
     kill -9 MY_PROCESS_ID
