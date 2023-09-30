@@ -22,7 +22,7 @@ Always have a backup plan. Never lose quality work.
 
 3. Customize the `config.ini` file to configure your backup settings. Use a `[section]` or multiple to define unique backup profiles.
 
-4. Ensure that the required Python packages (`scheduler` and `oci`) are installed by executing the following command:
+4. Ensure that the required Python packages (`scheduler` and `oci`) are installed to your environment by executing the following command:
 
     ```
     pip install scheduler oci
