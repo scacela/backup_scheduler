@@ -51,7 +51,7 @@ Always have a backup plan. Never lose quality work.
     ps aux | grep backup.py
     ```
 
-10. To stop the script from producing backups from a particular process, terminate the process by running the following command, replacing `MY_PROCESS_ID` with your own.
+10. To stop the script from producing backups from a particular process, terminate the process by executing the following command, replacing `MY_PROCESS_ID` with your own.
 
     ```
     kill -9 MY_PROCESS_ID
