@@ -18,7 +18,7 @@ Always have a backup plan. Never lose quality work.
     git clone https://github.com/scacela/backup_scheduler.git
     ```
     
-2. Ensure that your environment is authorized to access Oracle Object Storage using either api keys and an OCI config file at `~/.oci`, or resource principal authentication.
+2. Ensure that your environment is authorized to access Oracle Object Storage using either api keys and an OCI config file within the `~/.oci` directory, or resource principal authentication.
 
 3. Customize the `config.ini` file to configure your backups. Use a `[section]` or multiple to specify unique backup profiles.
 
