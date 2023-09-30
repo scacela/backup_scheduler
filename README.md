@@ -44,7 +44,7 @@ Always have a backup plan. Never lose quality work.
     > **Note:**
     > * If you wish to track the process that your script is running on for monitoring and termination, make a note of the process id.
     > * You can adjust the configurations in `config.ini` as needed. After updates are made to `config.ini`, repeat this step to perform backups based on your updated configurations.
-\
+
 4. Check `backup_stdouterr.log` to monitor the logs associated with your latest process where `backup.py` is running.
 
 5. Monitor details about the process(es) that your script is running on:
