@@ -34,14 +34,14 @@ Always have a backup plan. Never lose quality work.
     cd backup_scheduler
     ```
 
-6. Run `backup_script.py` using a new background process by executing the below command. This script will run continuously to perform scheduled backups according to the configurations in `config.ini`.
+6. Run `backup.py` using a new background process by executing the below command. This script will run continuously to perform scheduled backups according to the configurations in `config.ini`.
 
     ```
     nohup python -u backup.py > backup_stdouterr.log 2>&1 &
     ```
     > **Note:** Make a note of the process id that your script is running on.
 
-7. Check `backup_stdouterr.log` to monitor the logs associated with your latest process where `backup_script.py` is running.
+7. Check `backup_stdouterr.log` to monitor the logs associated with your latest process where `backup.py` is running.
 
 8. You can adjust the configurations in `config.ini` as needed. After updates are made to `config.ini`, repeat step 6 to perform backups based on your updated configurations.
 
