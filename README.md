@@ -1,73 +1,58 @@
 # backup_scheduler
-Save timestamped backups of your files and folders on a scheduled basis to your local environment or remotely to Oracle Object Storage.
-\
-For local backups, specify the maximum number of backups to retain, and automatically dump the oldest backups. Manage your Oracle Object Storage backups using Oracle Object Storage Lifecycle Policy Rules and Retention Rules.
+Always have a backup plan. Never lose quality work.
 
-## Prerequisites
+## Features
+* Save timestamped backups of your files and folders on a scheduled basis to your local environment, or remotely to Oracle Object Storage
+* Configure multiple backup profiles with custom parameters
+* For local backups, specify the maximum number of backups to retain, so that as new backups are saved, the oldest files are dumped
+* For Object Storage backups, choose api key or resource principal authentication and back up to a region of your choice
+* Create weekly, daily, hourly, or minutely backups
 
-1. Clone this repository to the environment from which you will be taking backups.
-	
- 	```
-	git clone https://github.com/scacela/backup_scheduler.git
-	```
-
-2. For use with Oracle Object Storage, ensure that your environment is authenticated for the Object Storage connection. This script leverages resource principal authentication by default.
-
-3. For use with Oracle Object Storage, ensure that your environment is able to access Oracle Object Storage via either the public internet, or if you will be taking backups from within your Oracle Cloud environment, you may use a Service Gateway to access Oracle Object Storage over the Oracle Services Network (OSN).
-
-4. Install `scheduler` to your environment.
-
-	```
-	pip install scheduler
- 	```
+    > **Recommendation:** Manage your Oracle Object Storage backups using Oracle Object Storage Lifecycle Policy Rules and Retention Rules.
 
 ## Usage Instructions
 
-1. In `backup.py`, edit the entries under the `my_schedule` function to include the file or directory for which you wish to save timestamped backups on a scheduled basis to your local environment or remotely to Oracle Object Storage.
+1. Download this project:
 
-	```
- 	# Change directory to the folder you downloaded, containing the backup script.
- 	cd backup_scheduler
- 	```
-	```
- 	# Open the backup script using an editor. In this example, vi is used.
- 	vi backup.py
- 	```
+    ```
+    git clone https://github.com/scacela/backup_scheduler.git
+    ```
+    
+2. Ensure that your environment is authorized to access Oracle Object Storage using either api keys and an OCI config file at `~/.oci`, or resource principal authentication.
 
-3. Execute `backup.py` in a background process. Make a note of the process ID that your process is using.
-	
- 	```
-	nohup python -u backup.py > backup_stdouterr.log 2>&1 &
-	```
- 
-4. Capture the process ID that the process is using, replacing the placeholder `MY_PROCESS_ID` with your own.
-	
- 	```
-	export backup_pid=MY_PROCESS_ID
-	```
- 
-5. Monitor the status of your process:
-	
- 	```
-	ps aux | grep $backup_pid
-	```
- 
-6. Monitor your backup location in Oracle Object Storage, or use the following command to monitor a backup location within your local environment. Replace the placeholder `MY_LOCAL_BACKUP_LOCATION` with your own.
-	
- 	```
-	ls -a1 MY_LOCAL_BACKUP_LOCATION
-	```
- 
-7. To stop creating and deleting backups, terminate the process:
-	
- 	```
-	kill -9 $backup_pid
-	```
+3. Customize the `config.ini` file to configure your backups. Use a `[section]` or multiple to specify unique backup profiles.
 
-8. To resume creating and deleting backups, repeat step 2.
+4. Ensure that the required Python packages (`scheduler` and `oci`) are installed using the following command:
 
-9. To monitor logs, review the contents of `backup_stdouterr.log`.
-	
- 	```
-	vi backup_stdouterr.log
-	```
+    ```
+    pip install scheduler oci
+    ```
+
+5. Change your directory to the folder containing the Python script `backup_script.py`:
+
+    ```
+    cd backup_scheduler
+    ```
+
+6. Run `backup_script.py` using a background process by executing the below command. This script will run continuously to perform scheduled backups according to the configurations in `config.ini`.
+
+    ```
+    nohup python -u backup.py > backup_stdouterr.log 2>&1 &
+    ```
+    > **Note:** Make a note of the process id that your process is using.
+
+7. Monitor details about the process that your script is running on:
+
+    ```
+    ps aux | grep backup.py
+    ```
+
+8. Check `backup_stdouterr.log` to monitor the logs associated with your latest process where `backup_script.py` is running.
+
+9. You can adjust the configurations in `config.ini` as needed. After updates are made to `config.ini`, repeat step 5 to perform backups based on your updated configurations.
+
+10. To stop the script from producing backups from a particular process, terminate the process by running the following command, replacing `MY_PROCESS_ID` with your own.
+
+    ```
+    kill -9 MY_PROCESS_ID
+    ```
