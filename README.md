@@ -41,7 +41,7 @@ Always have a backup plan. Never lose quality work.
     ```
     nohup python -u backup.py > backup_stdouterr.log 2>&1 &
     ```
-    > **Make a note the process id** if you wish to track the process that your script is running on for monitoring and termination.
+    > **Make a note the process id** if you wish to track the process that your script is running on for monitoring and termination.\
     > **You can adjust the configurations** in `config.ini` as needed. After updates are made to `config.ini`, repeat this step to perform backups based on your updated configurations.
     
 4. Check `backup_stdouterr.log` to monitor the logs associated with your latest process where `backup.py` is running.
