@@ -41,7 +41,7 @@ Always have a backup plan. Never lose quality work.
     ```
     > **Note:** Make a note of the process id that your script is running on.
 
-7. Monitor details about the process that your script is running on:
+7. Monitor details about the process(es) that your script is running on:
 
     ```
     ps aux | grep backup.py
