@@ -1,161 +1,232 @@
 import os
-import sys
-import schedule
-from time import sleep
 import shutil
 import datetime
+import configparser
+import sched
+import time
 import oci
-import re
+from pathlib import Path
 
-retry_strategy = oci.retry.DEFAULT_RETRY_STRATEGY
+# Initialize the scheduler
+scheduler = sched.scheduler(time.time, time.sleep)
 
-def create_os_credentials():
-    # configure object storage credentials
-    signer = oci.auth.signers.get_resource_principals_signer()
-    os_client = oci.object_storage.ObjectStorageClient(config={}, signer=signer, retry_strategy=retry_strategy, timeout=60)
-    os_namespace = os_client.get_namespace().data
-    return os_client, os_namespace
+def get_time():
+    return datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+
+def delete_oldest_files(directory, n):
+    # Get a list of all files in the directory and its subdirectories
+    all_files = []
+    for root, _, files in os.walk(directory):
+        for file in files:
+            file_path = os.path.join(root, file)
+            all_files.append((file_path, os.path.getmtime(file_path)))
+
+    # Sort the files by modification time in ascending order
+    all_files.sort(key=lambda x: x[1])
+
+    # Delete the oldest n files
+    for i in range(n):
+        if i < len(all_files):
+            file_to_delete = all_files[i][0]
+            try:
+                os.remove(file_to_delete)
+                print(f"{get_time()}: Deleted: {file_to_delete}")
+            except Exception as e:
+                print(f"{get_time()}: Local deletion of top {n} oldest files {file_to_delete} failed: {str(e)}")
+                
+    # Delete empty folders
+    for root, dirs, _ in os.walk(directory, topdown=False):
+        for dir_name in dirs:
+            dir_path = os.path.join(root, dir_name)
+            if not os.listdir(dir_path):
+                try:
+                    os.rmdir(dir_path)
+                    print(f"{get_time()}: Deleted empty folder: {dir_path}")
+                except Exception as e:
+                    print(f"{get_time()}: Local deletion of empty folder {dir_path} failed: {str(e)}")
+
+# Function to perform local backup
+def perform_local_backup(source_path, destination_path, max_num_backups):
+    print(f"{get_time()}: perform_local_backup(source_path={source_path}, destination_path={destination_path}")
+    try:
+        # Create the destination directory if it doesn't exist
+        os.makedirs(destination_path, exist_ok=True)
+        
+        # Generate a timestamp
+        timestamp = get_time()
+
+        # Backup the file or folder
+        if os.path.isfile(source_path):
+            # Backup a file
+            file_name = os.path.basename(source_path)
+            destination_path_2 = os.path.join(destination_path, file_name)
+            # Create the destination directory if it doesn't exist
+            os.makedirs(destination_path_2, exist_ok=True)
+            destination_path_file = os.path.join(destination_path_2, f"{file_name}.{timestamp}")            
+            shutil.copy2(source_path, destination_path_file)
+        elif os.path.isdir(source_path):
+            folder_name = os.path.basename(source_path)
+            # Upload a folder and its contents while preserving the structure
+            for root, _, files in os.walk(source_path):
+                for file_name in files:
+                    relative_path = os.path.relpath(root, source_path)
+                    destination_path_2 = os.path.join(destination_path, folder_name, relative_path, file_name)
+                    # Create the destination directory if it doesn't exist
+                    os.makedirs(destination_path_2, exist_ok=True)
+                    destination_path_file = os.path.join(destination_path_2, f"{file_name}.{timestamp}")
+                    source_file = os.path.join(root, file_name)
+                    shutil.copy2(source_file, destination_path_file)
+        
+        print(f"{get_time()}: Local backup completed: {source_path} -> {destination_path}")
+    except Exception as e:
+        print(f"{get_time()}: Local backup failed: {str(e)}")
+    delete_oldest_files(destination_path, max_num_backups)
     
-os_client, os_namespace = create_os_credentials()
+# Function to perform Oracle Object Storage backup
+def perform_object_storage_backup(source_path, object_storage_path, bucket_name, use_api_keys=True, region="us-phoenix-1"):
+    print(f"{get_time()}: perform_object_storage_backup(source_path={source_path}, object_storage_path={object_storage_path}, bucket_name={bucket_name}, use_api_keys={use_api_keys}, region={region})")
+    try:
+        retry_strategy = oci.retry.DEFAULT_RETRY_STRATEGY
 
-def get_suffix():
-    date_suffix=datetime.datetime.today().strftime("%Y_%m_%d_%H:%M:%S")
-    return date_suffix
+        if use_api_keys:
+            # Specify the path to your OCI config file
+            config_file = "/home/datascience/.oci/config"  # Update with the actual path to your config file
 
-def create_backups_object_storage(src_path, backups_dir, bucket_name):
-    print(f"\nCREATE_BACKUPS_OBJECT_STORAGE: src_path='{src_path}', backups_dir='{backups_dir}', bucket_name='{bucket_name}'\n")
-    date_suffix=get_suffix()
-
-    basename=os.path.basename(src_path)
-    # check if file
-    if os.path.isfile(src_path):
-      with open(src_path, "rb") as file:
-          dest_file_path=f"{backups_dir}/{basename}/{basename}.{date_suffix}"
-          try:
-            os_client.put_object(namespace_name=os_namespace, bucket_name=bucket_name, object_name=dest_file_path, put_object_body=file)
-            print(f"Successfully copied file '{src_path}' to remote destination object '{dest_file_path}' in bucket '{bucket_name}'.")
-          except:
-            print(f"Error: Failed to copy file '{src_path}' to remote destination object '{dest_file_path}' in bucket '{bucket_name}'.")
-
-    # check if folder
-    # todo: resolve BUG101: add ability to preserve middle directories. Middle directories are currently ignored, such that folder1/folder2/file.txt would get copied to folder1/file.txt
-    elif os.path.isdir(src_path):
-      for root, _, files in os.walk(src_path):
-          try:
-            for file_name in files:
-                with open(os.path.join(root, file_name), "rb") as file:
-                    dest_file_path=f"{backups_dir}/{basename}/{file_name}/{file_name}.{date_suffix}"
-                    # remove consecutive slashes. Consecutive slashes would result in creation of a folder with no name
-                    dest_file_path=re.sub(r'/+', '/', dest_file_path)
-                    try:
-                      os_client.put_object(namespace_name=os_namespace, bucket_name=bucket_name, object_name=dest_file_path, put_object_body=file)
-                      print(f"Successfully copied nested file '{src_path}/{file_name}' to remote destination object '{dest_file_path}' in bucket '{bucket_name}'")
-                    except:
-                      print(f"Error: Failed to copy nested file '{src_path}/{file_name}' to remote destination object '{dest_file_path}' in bucket '{bucket_name}'")
-                print(f"Successfully copied folder '{src_path}' to remote destination folder '{backups_dir}/{basename} in bucket '{bucket_name}'")
-          except:
-            print(f"Error: Failed to copy folder '{src_path}' to remote destination folder '{backups_dir}/{basename}' in bucket '{bucket_name}'")
-    else:
-      print(f"No remote copy performed. The specified path '{src_path}' is neither a file nor a folder.")
-    return
-
-def create_backups_local(src_path, backups_dir, max_num_backups=4):
-    print(f"\nCREATE_BACKUPS_LOCAL: src_path='{src_path}', backups_dir='{backups_dir}', max_num_backups='{max_num_backups}'\n")
-    date_suffix=get_suffix()
-
-    basename=os.path.basename(src_path)
-    # Check if the following folder exists
-    dest_folder_path=f"{backups_dir}/{basename}"
-    if not os.path.exists(dest_folder_path):
-      # If it doesn't exist, create the folder
-      try:
-        os.makedirs(dest_folder_path)
-        print(f"Successfully created local destination folder '{dest_folder_path}'")
-      except:
-        print(f"Error: Local destination folder '{dest_folder_path}' could not be created")
-    # check if file
-    if os.path.isfile(src_path):
-      dest_file_path=f"{dest_folder_path}/{basename}.{date_suffix}"
-      try:
-        shutil.copyfile(src_path, dest_file_path)
-        print(f"Successfully copied file '{src_path}' to local destination file '{dest_file_path}'")
-      except:
-        print(f"Error: Failed to copy file '{src_path}' to local destination file '{dest_file_path}'")
-      # remove old
-      delete_backups_local(dest_folder_path, max_num_backups)
-
-    # check if folder
-    # todo: resolve BUG101
-    elif os.path.isdir(src_path):
-      for root, _, files in os.walk(src_path):
-          try:
-              for file_name in files:
-                  dest_folder_path_2=f"{dest_folder_path}/{file_name}"
-                  dest_file_path=f"{dest_folder_path_2}/{file_name}.{date_suffix}"
-                  if not os.path.exists(dest_folder_path_2):
-                    # If it doesn't exist, create the folder
-                    try:
-                      os.makedirs(dest_folder_path_2)
-                      print(f"Successfully created nested local destination folder '{dest_folder_path_2}'")
-                    except:
-                     print(f"Error: Nested local destination folder '{dest_folder_path_2}' could not be created")
-                  try:
-                    shutil.copyfile(f"{src_path}/{file_name}", dest_file_path)
-                    print(f"Successfully copied nested file '{src_path}/{file_name}' to local destination file '{dest_file_path}'")
-                  except:
-                    print(f"Error: failed to copy nested file '{src_path}/{file_name}' to local destination file '{dest_file_path}'")
-                  # remove old
-                  delete_backups_local(dest_folder_path_2, max_num_backups)
-              print(f"Successfully copied folder '{src_path}' to local destination folder '{backups_dir}/{basename}'")
-          except:
-              print(f"Error: Failed to copy folder '{src_path}' to local destination folder '{backups_dir}/{basename}'")
-    else:
-      print(f"No local copy performed. The specified path '{src_path}' is neither a file nor a folder.")
-
-def delete_backups_local(dest_folder_path, max_num_backups):
-    print(f"\nDELETE_BACKUPS_LOCAL: src_path='{dest_folder_path}', max_num_backups='{max_num_backups}'\n")
-
-    list_of_files = os.listdir(dest_folder_path)
-    full_path = ["{0}/{1}".format(dest_folder_path, x) for x in list_of_files]
-
-    if len(list_of_files) > max_num_backups:
-        
-        oldest_file = min(full_path, key=os.path.getctime)
-        
-        if os.path.isfile(oldest_file):
-          try:
-            os.remove(oldest_file)
-            print(f"Successfully removed oldest file '{oldest_file}'")
-          except:
-            print(f"Error: Failed to remove oldest file '{oldest_file}'")
+            # Load the OCI configuration from the config file
+            config = oci.config.from_file(config_file)
+            
+            object_storage = oci.object_storage.ObjectStorageClient(config=config, retry_stratefy=retry_strategy, timeout=60)
         else:
-          print(f"No removal performed. The path representing the oldest item '{oldest_file}' is neither a file nor a folder")
+            signer = oci.auth.signers.get_resource_principals_signer()
+            object_storage = oci.object_storage.ObjectStorageClient(config={}, signer=signer, retry_strategy=retry_strategy, timeout=60)
+        
+        namespace_name = object_storage.get_namespace().data
 
-def my_schedule():
+        # Generate a timestamp
+        timestamp = get_time()
+        
+        # Upload file or folder to Object Storage
+        if os.path.isfile(source_path):
+            # Upload a file
+            file_name = os.path.basename(source_path)
+            object_name = os.path.join(object_storage_path, file_name, f"{file_name}.{timestamp}")
+            with open(source_path, "rb") as file:
+                object_storage.put_object(namespace_name, bucket_name, object_name, file)
+        elif os.path.isdir(source_path):
+            folder_name = os.path.basename(source_path)
+            # Upload a folder and its contents while preserving the structure
+            for root, _, files in os.walk(source_path):
+                for file_name in files:
+                    relative_path = os.path.relpath(root, source_path)
+                    object_name = os.path.join(object_storage_path, folder_name, relative_path, file_name, f"{file_name}.{timestamp}")
+                    source_file = os.path.join(root, file_name)
+                    with open(source_file, "rb") as file:
+                        object_storage.put_object(namespace_name, bucket_name, object_name, file)
+        
+        print(f"{get_time()}: Object Storage backup completed: {source_path} -> {bucket_name}:{object_name}")
+    except Exception as e:
+        print(f"{get_time()}: Object Storage backup failed: {str(e)}")
 
-    
-    # Local Backup
+# Function to schedule backups
+def handle_backups(section):
+    print(f"{get_time()}: handle_backups(section={section})")
+    # Read configuration from a config file
+    config = configparser.ConfigParser()
+    config.read("config.ini")  # Adjust the config file path as needed
+        
+    source_path = config.get(section, "source_path")
+    destination_path = config.get(section, "destination_path")
+    backup_to_object_storage = config.getboolean(section, "backup_to_object_storage")
+    bucket_name = config.get(section, "bucket_name")
+    region = config.get(section, "region")
+    use_api_keys = config.getboolean(section, "use_api_keys")
+    max_num_backups = config.get(section, "max_num_backups")
 
-    ## Back up a file ("/home/datascience/mynotebook.ipynb") at minute 00 of every hour to a local folder ("/home/datascience/mybackups"). Retain 336 backups, i.e. 2 weeks of hourly backups
-    schedule.every().hour.at(":00").do(create_backups_local, src_path="/home/datascience/mynotebook.ipynb",backups_dir="/home/datascience/mybackups", max_num_backups=336)
+    if backup_to_object_storage:
+        params = (source_path, destination_path, bucket_name, use_api_keys, region)
+        perform_object_storage_backup(source_path, destination_path, bucket_name, use_api_keys, region)
+    else:
+        perform_local_backup(source_path, destination_path, max_num_backups)
 
-    ## Back up a folder ("/home/datascience/myfolder") at minute 30 of every hour to a local folder ("/home/datascience/mybackups"). Retain 336 backups, i.e. 2 weeks of hourly backups
-    schedule.every().hour.at(":30").do(create_backups_local, src_path="/home/datascience/myfolder",backups_dir="/home/datascience/mybackups", max_num_backups=336)
+# Calculate the next occurrence time based on schedule type and value
+def get_next_occurrence(schedule_type, schedule_value):
+    now = datetime.datetime.now()
     
+    if schedule_type == "weekly":
+        day_map = {
+            "monday": 0,
+            "tuesday": 1,
+            "wednesday": 2,
+            "thursday": 3,
+            "friday": 4,
+            "saturday": 5,
+            "sunday": 6
+        }
+        day_of_week = day_map.get(schedule_value.lower(), 0)
+        next_occurrence = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        next_occurrence += datetime.timedelta(days=(day_of_week - now.weekday()) % 7)
+    elif schedule_type == "daily":
+        hour = int(schedule_value)
+        next_occurrence = now.replace(minute=0, second=0, microsecond=0, hour=hour)
+        if now >= next_occurrence:
+            next_occurrence += datetime.timedelta(days=1)
+    elif schedule_type == "hourly":
+        minute = int(schedule_value)
+        next_occurrence = now.replace(second=0, microsecond=0, minute=minute)
+        if now >= next_occurrence:
+            next_occurrence += datetime.timedelta(hours=1)
+    elif schedule_type == "minutely":
+        second = int(schedule_value)
+        next_occurrence = now.replace(microsecond=0, second=second)
+        if now >= next_occurrence:
+            next_occurrence += datetime.timedelta(minutes=1)
     
-    # Remote Backup to Oracle Object Storage
-    
-    ## Back up a file ("/home/datascience/mynotebook.ipynb") at minute 00 of every hour to a remote folder ("mybackups") in an Object Storage bucket ("mybucket")
-    schedule.every().hour.at(":00").do(create_backups_object_storage, src_path="/home/datascience/mynotebook.ipynb",backups_dir="mybackups",bucket_name="mybucket")
-    
-    ## Back up a folder ("/home/datascience/myfolder") at minute 30 of every hour to a remote folder ("mybackups") in an Object Storage bucket ("mybucket")
-    schedule.every().hour.at(":30").do(create_backups_object_storage, src_path="/home/datascience/myfolder",backups_dir="mybackups",bucket_name="mybucket")
+    return time.mktime(next_occurrence.timetuple())
+
+# Main function to start the scheduler and set the backup schedule
+def schedule_and_run_jobs():
+    try:
+        # Read schedule configuration from a config file
+        config = configparser.ConfigParser()
+        config.read("config.ini")  # Adjust the config file path as needed
+        
+        print(f"{get_time()}: About to configure schedules for each config section")
+
+        next_occurrences=[]
+        
+        # Schedule backups based on user configuration
+        for section in config.sections():
+            schedule_type = config.get(section, "schedule_type")
+            schedule_value = config.get(section, "schedule_value")            
+            
+            # Calculate the next occurrence time
+            next_occurrence = get_next_occurrence(schedule_type, schedule_value)
+
+            next_occurrences.append(next_occurrence)
+            
+            # Schedule the next backup
+            scheduler.enterabs(next_occurrence, 1, handle_backups, (section,)) # the reason for the comma after the single element is that it makes it so that the action args are the tuple, rather than the single element inside it
+        
+        # Get the soonest next occurrences so that this function doesn't get called more often than necessary
+        soonest_next_occurrence = min(next_occurrences)
+        print(f"{get_time()}: soonest_next_occurrence: {soonest_next_occurrence}")
+            
+        # Schedule the next backup
+        scheduler.enterabs(soonest_next_occurrence, 1, schedule_and_run_jobs, ())
+            
+    except Exception as e:
+        print(f"{get_time()}: An error occurred: {str(e)}")
 
 def main():
-    my_schedule()
-    while True:
-        schedule.run_pending()
-        sleep(1)
+    
+    # Schedule the initial backup
+    scheduler.enter(0, 1, schedule_and_run_jobs, ())
 
-if __name__ == '__main__':
+    print(f"{get_time()}: About to start the scheduler")
+    
+    scheduler.run()
+
+    print("All jobs completed.")
+
+if __name__ == "__main__":
     main()
