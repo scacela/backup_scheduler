@@ -43,7 +43,7 @@ Always have a backup plan. Never lose quality work.
 
 7. Check `backup_stdouterr.log` to monitor the logs associated with your latest process where `backup_script.py` is running.
 
-8. You can adjust the configurations in `config.ini` as needed. After updates are made to `config.ini`, repeat step 5 to perform backups based on your updated configurations.
+8. You can adjust the configurations in `config.ini` as needed. After updates are made to `config.ini`, repeat step 6 to perform backups based on your updated configurations.
 
 9. Monitor details about the process(es) that your script is running on:
 
