@@ -11,7 +11,7 @@ from pathlib import Path
 scheduler = sched.scheduler(time.time, time.sleep)
 
 # Initialize the config path location
-config = configparser.ConfigParser
+config = configparser.ConfigParser()
 config.read("config.ini")
 
 def get_time():
