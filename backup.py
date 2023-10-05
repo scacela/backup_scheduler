@@ -11,7 +11,7 @@ from pathlib import Path
 scheduler = sched.scheduler(time.time, time.sleep)
 
 # Initialize the config path location
-configParser = configparser.ConfigParser
+config = configparser.ConfigParser
 config.read("config.ini")
 
 def get_time():
@@ -95,7 +95,7 @@ def perform_local_backup(source_path, destination_path, max_num_backups):
     delete_oldest_files(destination_path, max_num_backups)
     
 # Function to perform Oracle Object Storage backup
-def perform_object_storage_backup(source_path, object_storage_path, bucket_name, use_api_keys=True, region="us-phoenix-1", config_file_path="~/.oci/config"):
+def perform_object_storage_backup(source_path, object_storage_path, bucket_name, region="us-phoenix-1", use_api_keys=True, config_file_path="~/.oci/config"):
     print(f"{get_time()}: perform_object_storage_backup(source_path={source_path}, object_storage_path={object_storage_path}, bucket_name={bucket_name}, use_api_keys={use_api_keys}, region={region})")
     try:
         retry_strategy = oci.retry.DEFAULT_RETRY_STRATEGY
@@ -147,10 +147,11 @@ def handle_backups(section):
     bucket_name = config.get(section, "bucket_name")
     region = config.get(section, "region")
     use_api_keys = config.getboolean(section, "use_api_keys")
+    config_file_path = config.getboolean(section, "config_file_path")
     max_num_backups = int(config.get(section, "max_num_backups"))
 
     if backup_to_object_storage:
-        perform_object_storage_backup(source_path, destination_path, bucket_name, use_api_keys, region)
+        perform_object_storage_backup(source_path, destination_path, bucket_name, region, use_api_keys, config_file_path)
     else:
         perform_local_backup(source_path, destination_path, max_num_backups)
 
