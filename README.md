@@ -5,7 +5,7 @@ Always have a backup plan. Never lose quality work.
 * Save timestamped backups of your files and folders on a scheduled basis to your local environment, or remotely to Oracle Object Storage
 * Configure multiple backup profiles with custom parameters
 * For local backups, specify the maximum number of backups to retain, so that as new backups are saved, the oldest files are dumped
-* For Object Storage backups, choose api key or resource principal authentication and back up to a region of your choice
+* For Object Storage backups, choose api key or resource principal authentication and back up to a region or tenancy of your choice
 * Create weekly, daily, hourly, or minutely backups
 
     > **Recommendation:** Manage your Oracle Object Storage backups using Oracle Object Storage Lifecycle Policy Rules and Retention Rules.
@@ -14,10 +14,10 @@ Always have a backup plan. Never lose quality work.
 
 1. Ensure that your environment is authorized to access Oracle Object Storage using either api keys and an OCI config file within the `~/.oci` directory, or resource principal authentication.
 
-2. Ensure that the required Python packages (`scheduler` and `oci`) are installed to your environment by executing the following command:
+2. Ensure that the required `oci` Python package is installed to your environment by executing the following command:
 
     ```
-    pip install scheduler oci
+    pip install oci
     ```
     
 3. Download this project:
@@ -28,9 +28,9 @@ Always have a backup plan. Never lose quality work.
 
 ## Usage Instructions
     
-1. Customize the `config.ini` file to configure your backup settings. Define unique backup profiles using sections with associated key-value pair attributes.
+1. Customize the `config.ini` file from the `backup_scheduler` folder to configure your backup settings. Define unique backup profiles using sections with associated key-value pair attributes.
 
-2. Change your directory to the folder containing the Python script `backup.py`:
+2. Change your directory to the `backup_scheduler` folder:
 
     ```
     cd backup_scheduler
