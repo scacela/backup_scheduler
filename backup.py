@@ -147,7 +147,7 @@ def handle_backups(section):
     bucket_name = config.get(section, "bucket_name")
     region = config.get(section, "region")
     use_api_keys = config.getboolean(section, "use_api_keys")
-    config_file_path = config.getboolean(section, "config_file_path")
+    config_file_path = config.get(section, "config_file_path")
     max_num_backups = int(config.get(section, "max_num_backups"))
 
     if backup_to_object_storage:
